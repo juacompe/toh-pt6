@@ -1,8 +1,8 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { async, ComponentFixture, TestBed, fakeAsync, flush } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { HeroesComponent, HeroesPresenter, View } from './heroes.component';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { Observable } from 'rxjs';
+import { Observable, defer } from 'rxjs';
 import { Hero } from '../hero';
 
 describe('HeroesComponent', () => {
@@ -47,10 +47,11 @@ describe('HeroesPresenter', () => {
       view.verify()
     })
 
-    it('should add new hero to list of heroes', () => {
+    it('should add new hero to list of heroes', fakeAsync(() => {
       p.add('Jua')
+      flush()
       expect(p.heroes.length).toEqual(1)
-    })
+    }))
   })
 });
 
@@ -58,9 +59,13 @@ class MockView implements View {
   called = false
   addHeroToService(hero: Hero): Observable<Hero> {
     this.called = true
-    return new Observable()
+    return asyncData<Hero>(hero)
   }
   verify(): void {
     expect(this.called).toBeTruthy()
   }
+}
+
+function asyncData<T>(data: T) {
+  return defer(() => Promise.resolve(data));
 }
